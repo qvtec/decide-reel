@@ -71,6 +71,38 @@ def validate(d):
     return errs
 
 
+# 1カットに大きく出すので、長い文は読み切れない。超えたら警告だけ出す（ビルドは止めない）
+LIMITS = {"title": 12, "question": 24, "claim": 20, "source": 10, "fact": 18, "label": 12, "note": 20}
+
+
+def length_warnings(d):
+    warns = []
+
+    def check(text, limit, where):
+        if isinstance(text, str) and len(text) > limit:
+            warns.append("{}: {}字（目安{}字）「{}」".format(where, len(text), limit, text))
+
+    for i, it in enumerate(d.get("items", [])):
+        w = "items[{}]".format(i)
+        check(it.get("title"), LIMITS["title"], w + ".title")
+        check(it.get("question"), LIMITS["question"], w + ".question")
+        claims = it.get("claims") or []
+        if len(claims) > 3:
+            warns.append("{}.claims: {}件（目安3件）".format(w, len(claims)))
+        for j, c in enumerate(claims):
+            check(c.get("text"), LIMITS["claim"], "{}.claims[{}].text".format(w, j))
+            check(c.get("source"), LIMITS["source"], "{}.claims[{}].source".format(w, j))
+        fx = (it.get("facts") or []) + (it.get("unknowns") or [])
+        if len(fx) > 4:
+            warns.append("{}: facts+unknowns {}件（目安4件）".format(w, len(fx)))
+        for j, f in enumerate(fx):
+            check(f, LIMITS["fact"], "{}.facts/unknowns[{}]".format(w, j))
+        for j, o in enumerate(it.get("options") or []):
+            check(o.get("label"), LIMITS["label"], "{}.options[{}].label".format(w, j))
+            check(o.get("note"), LIMITS["note"], "{}.options[{}].note".format(w, j))
+    return warns
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("data", help="決めることのJSON")
@@ -91,13 +123,16 @@ def main():
                .replace(" ", "\\u2028")
                .replace(" ", "\\u2029"))
     page = TEMPLATE.read_text(encoding="utf-8")
-    page = page.replace("<title>decide-reel</title>", "<title>{}</title>".format(html.escape(data["title"])), 1)
+    page = page.replace("<title>decide-reel</title>", "<title>{}</title>".format(html.escape(data["title"].replace("\n", ""))), 1)
     page = page.replace(PLACEHOLDER, payload, 1)
 
     out = pathlib.Path(a.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(page, encoding="utf-8")
     print("{} ({}件)".format(out.resolve(), len(data["items"])))
+    warns = length_warnings(data)
+    if warns:
+        print("長すぎる項目（短くしてビルドし直すと見やすくなります）:\n  " + "\n  ".join(warns), file=sys.stderr)
 
 
 if __name__ == "__main__":
