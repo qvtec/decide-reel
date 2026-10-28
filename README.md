@@ -71,7 +71,7 @@ python3 plugins/decide-reel/skills/decide-reel/scripts/build.py data.json out.ht
 
 ## ナレーションについて
 
-ブラウザの読み上げ機能（Web Speech API）を使い、端末内の声を優先します。端末内に声がなく、オンラインの声しかないブラウザでは、読み上げる文がブラウザの提供元に送られることがあります。社外秘の内容を扱うときは、声をOFFにするか、JSONに `"narration": false` を入れてください。
+ブラウザの読み上げ機能（Web Speech API）を使い、端末内の声を優先します。下のバーのメニューで声を選べます（選んだ声は覚えておきます）。「オンライン」と付いた声は自然ですが、読み上げる文がブラウザの提供元に送られます。社外秘の内容を扱うときは、声をOFFにするか、JSONに `"narration": false` を入れてください。
 
 ## License
 
