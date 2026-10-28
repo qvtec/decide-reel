@@ -100,80 +100,61 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .agenda li b { color: var(--accent); font-weight: 900; font-variant-numeric: tabular-nums; min-width: 32px; }
 .agenda.small li { font-size: 16px; padding: 7px 0; }
 
-/* 章の扉 */
-.s-cover { display: flex; flex-direction: column; justify-content: center; }
-.s-cover .ghost { right: -40px; bottom: -60px; font-size: 560px; }
-.roll { display: flex; font-size: 190px; font-weight: 900; line-height: 1; height: 1em; overflow: hidden; color: var(--accent); letter-spacing: -.04em; }
+/* 論点のページ：上から 見出し → 言い分・事実 → 選択肢 の順に出す */
+.b { opacity: 0; transform: var(--from, translateY(30px)); pointer-events: none; transition: opacity .45s ease var(--d, 0ms), transform .8s var(--ease) var(--d, 0ms); }
+.scene.st1 .sec1 .b, .scene.st2 .sec2 .b, .scene.st3 .sec3 .b { opacity: 1; transform: none; pointer-events: auto; }
+.s-issue { display: flex; flex-direction: column; justify-content: center; gap: 16px; }
+.s-issue .ghost { right: -30px; top: -90px; font-size: 420px; }
+.ihead { display: flex; align-items: center; gap: 26px; min-height: 110px; }
+.roll { display: flex; font-size: 104px; font-weight: 900; line-height: 1; height: 1em; overflow: hidden; color: var(--accent); letter-spacing: -.04em; flex: none; }
 .roll .col { display: block; height: 1em; overflow: hidden; }
 .roll .strip { display: flex; flex-direction: column; transform: translateY(0); transition: transform 1.1s cubic-bezier(.2, .9, .1, 1); transition-delay: var(--d); }
 .roll .strip span { height: 1em; line-height: 1; }
 .scene.in .roll .strip { transform: translateY(calc(var(--y) * -1em)); }
-.s-cover .of { font-size: 18px; font-weight: 800; letter-spacing: .2em; margin: 20px 0 12px; }
-.s-cover .kin { font-size: 64px; max-width: 1060px; }
-.slash { margin-top: 28px; height: 10px; width: 180px; background: var(--ink); transform: scaleX(0) skewX(-20deg); transform-origin: left; transition: transform .7s var(--ease) var(--d); }
-.slash::after { content: ""; display: block; width: 50px; height: 10px; margin-left: 196px; background: var(--hl); }
-.scene.in .slash { transform: scaleX(1) skewX(-20deg); }
-
-/* 決めること */
-.s-question { display: flex; flex-direction: column; justify-content: center; }
-.s-question .ghost { right: -20px; top: -70px; font-size: 520px; }
-.s-question .kin { margin-top: 22px; max-width: 1060px; }
-.uline { margin-top: 22px; height: 14px; width: 100%; max-width: 760px; background: var(--hl); transform: scaleX(0); transform-origin: left; transition: transform .8s var(--ease) var(--d); }
-.scene.in .uline { transform: scaleX(1); }
-.s-question .ctx { margin-top: 22px; font-size: 22px; font-weight: 600; color: var(--sub); line-height: 1.6; max-width: 980px; }
-
-/* 1つずつ大きく：資料の言い分・わかっていること */
-.s-claim, .s-fact { display: flex; flex-direction: column; justify-content: center; }
-.shotlbl { position: absolute; top: 0; left: 0; right: 0; display: flex; justify-content: space-between; align-items: center; }
-.shotlbl .cnt { font-size: 18px; font-weight: 900; font-variant-numeric: tabular-nums; }
-.shotlbl .cnt i { font-style: normal; color: var(--mute); }
-.quote { font-size: 200px; font-weight: 900; line-height: .6; height: 90px; color: var(--accent); --from: scale(.3) rotate(-20deg); transition-timing-function: ease, var(--pop); }
-.src { display: inline-block; align-self: flex-start; background: var(--ink); color: #fff; font-size: 20px; font-weight: 800; padding: 8px 18px; border-radius: 6px; margin: 6px 0 22px; --from: translateX(-80px); }
-.s-fact .frow { display: flex; align-items: center; gap: 44px; }
-.badge { position: relative; flex: none; width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; font-size: 84px; font-weight: 900; color: #fff; --from: scale(0) rotate(-90deg); transition-timing-function: ease, var(--pop); }
-.badge.known { background: var(--ok); }
-.badge.unknown { background: var(--unk); }
-.badge::after { content: ""; position: absolute; inset: -14px; border-radius: 50%; border: 4px solid currentColor; opacity: 0; }
-.badge.known::after { color: var(--ok); }
-.badge.unknown::after { color: var(--unk); }
-.scene.in .badge::after { animation: ring 1.2s ease-out .35s 2; }
-.s-fact .kin { flex: 1; }
+.ihead .ttl { display: flex; align-items: center; gap: 12px; font-size: 17px; font-weight: 800; letter-spacing: .06em; margin-bottom: 6px; }
+.ihead .ttl i { font-style: normal; color: var(--mute); letter-spacing: .16em; font-size: 14px; }
+.ihead .kin { max-width: 1000px; }
+.mid { display: grid; gap: 20px; }
+.box { background: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 14px 20px 12px; box-shadow: 5px 5px 0 var(--ink); min-width: 0; }
+.box h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 6px; font-size: 14px; font-weight: 900; letter-spacing: .14em; }
+.box h4::before { content: ""; width: 20px; height: 5px; border-radius: 3px; background: var(--accent); }
+.li { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); font-size: 20px; font-weight: 700; line-height: 1.4; --from: translateX(-24px); }
+.box h4 + .li { border-top: 0; }
+.li .tag { flex: none; font-size: 13px; font-weight: 800; background: var(--ink); color: #fff; padding: 3px 9px; border-radius: 5px; transform: translateY(-2px); }
+.li .ic { flex: none; width: 24px; height: 24px; border-radius: 50%; display: inline-grid; place-items: center; font-size: 14px; font-weight: 900; color: #fff; transform: translateY(2px); }
+.li .ic.known { background: var(--ok); }
+.li .ic.unknown { background: var(--unk); }
+.li.unknown { color: #c4383d; }
 
 /* 選ぶ */
-.s-choice .top { display: flex; align-items: baseline; gap: 22px; }
-.s-choice .remind { font-size: 32px; font-weight: 800; line-height: 1.35; margin: 10px 0 14px; }
-.recap { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-.recap span { font-size: 15px; font-weight: 700; padding: 5px 12px; border-radius: 999px; white-space: nowrap; }
-.recap .known { background: var(--ok-soft); color: #08754a; }
-.recap .unknown { background: var(--unk-soft); color: #c4383d; }
-.recap .more { background: var(--soft); color: var(--sub); }
-.opts { display: grid; gap: 20px; }
-.opt { position: relative; text-align: left; background: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 18px 20px 20px; box-shadow: 6px 6px 0 var(--ink); --from: translateY(90px) scale(.9) rotate(-3deg); transition: opacity .45s ease var(--d, 0ms), transform .8s var(--pop) var(--d, 0ms), background .2s, color .2s; }
+.opts { display: grid; gap: 18px; }
+.opt { position: relative; text-align: left; background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 12px 18px 14px; box-shadow: 5px 5px 0 var(--ink); --from: translateY(90px) scale(.9) rotate(-3deg); transition: opacity .45s ease var(--d, 0ms), transform .8s var(--pop) var(--d, 0ms), background .2s, color .2s; }
 .scene.in .opt:hover { transform: translate(-3px, -3px); transition-delay: 0ms; }
-.opt .k { display: inline-grid; place-items: center; width: 54px; height: 54px; border-radius: 12px; background: var(--ink); color: #fff; font-size: 30px; font-weight: 900; margin-bottom: 12px; }
-.opt .lb { display: block; font-size: 25px; font-weight: 800; line-height: 1.35; }
-.opt .nt { display: block; font-size: 16px; font-weight: 600; color: var(--sub); line-height: 1.5; margin-top: 8px; }
+.opt .k { float: left; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 10px; background: var(--ink); color: #fff; font-size: 24px; font-weight: 900; margin: 2px 14px 4px 0; }
+.opt .lb { display: block; font-size: 22px; font-weight: 800; line-height: 1.35; }
+.opt .nt { display: block; font-size: 15px; font-weight: 600; color: var(--sub); line-height: 1.45; margin-top: 4px; }
 .scene.in .opt.sel { background: var(--accent); color: #fff; transform: translate(-4px, -6px) scale(1.04); transition-delay: 0ms; }
 .opt.sel .k { background: #fff; color: var(--accent); }
 .opt.sel .nt { color: rgba(255, 255, 255, .85); }
 .scene.in .opts.chosen .opt:not(.sel) { opacity: .3; transform: scale(.95); transition-delay: 0ms; }
 .stamp { position: absolute; right: 14px; top: -16px; background: var(--hl); color: var(--ink); border: 3px solid var(--ink); font-size: 16px; font-weight: 900; border-radius: 8px; padding: 2px 10px; transform: rotate(10deg) scale(2.2); opacity: 0; transition: transform .35s var(--pop), opacity .15s; }
 .opt.sel .stamp { transform: rotate(10deg) scale(1); opacity: 1; }
-.alts { display: flex; gap: 14px; margin-top: 22px; }
-.alt { border: 3px dashed var(--mute); background: #fff; border-radius: 999px; padding: 10px 24px; font-size: 19px; font-weight: 800; color: var(--sub); transition: background .2s, color .2s, border-color .2s, opacity .3s, transform .3s var(--pop); }
+.brow { display: flex; align-items: center; gap: 14px; margin-top: 16px; min-height: 52px; }
+.alts { display: flex; gap: 12px; flex: none; }
+.alt { border: 3px dashed var(--mute); background: #fff; border-radius: 999px; padding: 8px 20px; font-size: 17px; font-weight: 800; color: var(--sub); transition: background .2s, color .2s, border-color .2s, opacity .3s, transform .3s var(--pop); }
 .alt:hover { border-color: var(--ink); color: var(--ink); }
 .alt .k { display: inline-block; min-width: 22px; color: var(--mute); margin-right: 6px; font-variant-numeric: tabular-nums; }
 .alt.sel.other { border: 3px solid var(--ink); background: var(--other); color: #fff; transform: scale(1.06); }
 .alt.sel.later { border: 3px solid var(--ink); background: var(--later); color: #fff; transform: scale(1.06); }
 .alt.sel .k { color: rgba(255, 255, 255, .8); }
-.opts.chosen ~ .alts .alt:not(.sel) { opacity: .35; }
-.panel { display: flex; align-items: center; gap: 14px; margin-top: 18px; padding: 12px 14px; background: var(--ink); color: #fff; border-radius: 14px; visibility: hidden; opacity: 0; transform: translateY(24px); transition: opacity .3s, transform .5s var(--ease), visibility 0s .3s; }
+.opts.chosen ~ .brow .alt:not(.sel) { opacity: .35; }
+.panel { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 7px 8px 7px 16px; background: var(--ink); color: #fff; border-radius: 14px; visibility: hidden; opacity: 0; transform: translateY(24px); transition: opacity .3s, transform .5s var(--ease), visibility 0s .3s; }
 .panel.show { visibility: visible; opacity: 1; transform: none; transition-delay: 0s; }
-.panel .res { flex: none; font-size: 19px; font-weight: 900; max-width: 360px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--hl); }
-.panel input { flex: 1; min-width: 0; font: inherit; font-size: 18px; padding: 11px 14px; border: 2px solid transparent; border-radius: 10px; background: #fff; color: var(--ink); outline: none; }
+.panel .res { flex: none; font-size: 17px; font-weight: 900; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--hl); }
+.panel input { flex: 1; min-width: 0; font: inherit; font-size: 16px; padding: 9px 12px; border: 2px solid transparent; border-radius: 10px; background: #fff; color: var(--ink); outline: none; }
 .panel input:focus { border-color: var(--hl); }
 .panel input.bad { border-color: var(--unk); animation: shake .35s; }
-.panel .go { flex: none; border: 0; background: var(--hl); color: var(--ink); border-radius: 10px; padding: 12px 22px; font-size: 19px; font-weight: 900; }
+.panel .go { flex: none; border: 0; background: var(--hl); color: var(--ink); border-radius: 10px; padding: 9px 18px; font-size: 17px; font-weight: 900; }
 @keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
 
 /* まとめ */
@@ -236,8 +217,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @media (max-width: 520px) { #dots { display: none; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .a, .kin .c, .roll .strip, .slash, .uline, .opt { transition-duration: .01ms !important; transition-delay: 0ms !important; }
-  .ghost, .startbtn::after, .scene.in .badge::after { animation: none; }
+  .a, .b, .kin .c, .roll .strip, .opt { transition-duration: .01ms !important; transition-delay: 0ms !important; }
+  .ghost, .startbtn::after { animation: none; }
 }
 </style>
 </head>
@@ -291,8 +272,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
       cDone: '決まった', cLater: 'あとで', cOpen: '未回答',
       sep: '：', note: 'メモ：', paren: function (s) { return '（' + s + '）'; },
       sayCover: function (i, t) { return '論点' + (i + 1) + '。' + t; },
-      sayClaim: function (c) { return c.source + '。' + c.text; },
-      sayFacts: 'わかっていること。', sayUnknown: 'まだわからないこと。',
+      sayClaim: function (c) { return c.source + '、' + c.text; },
+      sayClaims: '資料の言い分。', sayFacts: 'わかっていること。', sayUnknown: 'まだわからないこと。',
       sayChoose: 'どれにしますか？', saySummary: 'おつかれさまでした。決めたことをまとめました。', sayVoice: 'この声で読み上げます。'
     },
     en: {
@@ -308,7 +289,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       sep: ': ', note: 'Note: ', paren: function (s) { return ' (' + s + ')'; },
       sayCover: function (i, t) { return 'Issue ' + (i + 1) + '. ' + t; },
       sayClaim: function (c) { return c.source + ': ' + c.text; },
-      sayFacts: 'What we know.', sayUnknown: 'Still unknown.',
+      sayClaims: 'What the sources say. ', sayFacts: 'What we know. ', sayUnknown: 'Still unknown. ',
       sayChoose: 'Which one should we pick?', saySummary: 'Nice work. Here is the summary.', sayVoice: 'I will read with this voice.'
     }
   }[LANG];
@@ -517,7 +498,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   // 声なしのときの1カットの長さ。文字が短い前提で、テンポよく進める
   function estimate(text) {
     var n = String(text || '').length;
-    return Math.min(7000, Math.max(1900, 1200 + n * (LANG === 'en' ? 40 : 85)));
+    return Math.min(11000, Math.max(1900, 1200 + n * (LANG === 'en' ? 40 : 85)));
   }
 
   // ---- 進行 ----
@@ -527,13 +508,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
     if (pos < 0) return [{ scene: 'title' }];
     if (pos >= N) return [{ scene: 'summary', say: T.saySummary, se: 'fanfare' }];
     if (cache[pos]) return cache[pos];
-    var it = items[pos], b = [];
-    b.push({ scene: 'cover', say: T.sayCover(pos, flat(it.title)), se: 'sweep' });
-    b.push({ scene: 'question', say: it.question, se: 'swish' });
-    (it.claims || []).forEach(function (c, k) { b.push({ scene: 'claim', k: k, say: c.say || T.sayClaim(c), se: 'swish' }); });
-    (it.facts || []).forEach(function (f, k) { b.push({ scene: 'fact', k: k, kind: 'known', say: (k ? '' : T.sayFacts) + f, se: 'pop' }); });
-    (it.unknowns || []).forEach(function (f, k) { b.push({ scene: 'fact', k: k, kind: 'unknown', say: (k ? '' : T.sayUnknown) + f, se: 'pop' }); });
-    b.push({ scene: 'choice', say: it.choiceSay || T.sayChoose, se: 'swish', wait: true });
+    var it = items[pos], b = [], cl = it.claims || [], fx = it.facts || [], uk = it.unknowns || [];
+    var J = LANG === 'en' ? '. ' : '。';
+    b.push({ scene: 'issue', st: 0, say: T.sayCover(pos, flat(it.title)) + J + it.question, se: 'sweep' });
+    if (cl.length) b.push({ scene: 'issue', st: 1, say: T.sayClaims + cl.map(function (c) { return c.say || T.sayClaim(c); }).join(J), se: 'swish' });
+    if (fx.length || uk.length) b.push({ scene: 'issue', st: 2, say: (fx.length ? T.sayFacts + fx.join(J) + J : '') + (uk.length ? T.sayUnknown + uk.join(J) : ''), se: 'pop' });
+    b.push({ scene: 'issue', st: 3, say: it.choiceSay || T.sayChoose, se: 'swish', wait: true });
     return (cache[pos] = b);
   }
   function cur() { return beatsOf(S.pos)[S.beat]; }
@@ -557,7 +537,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       return;
     }
     if (!S.playing) { fillSeg(false, 0); return; }
-    var ms = estimate(b.say), lead = b.scene === 'cover' ? 450 : 0;
+    var ms = estimate(b.say), lead = b.st === 0 ? 450 : 0;
     fillSeg(false, ms + lead);
     function next() {
       if (tok !== S.token || !S.playing) return;
@@ -603,16 +583,16 @@ button { font: inherit; color: inherit; cursor: pointer; }
   // ---- 描画 ----
   var scenes = $('#scenes'), stinger = $('#stinger');
   function render() {
-    var b = cur(), key = S.pos + ':' + b.scene + ':' + (b.kind || '') + (b.k == null ? '' : b.k);
+    var b = cur(), key = S.pos + ':' + b.scene;
     if (key !== S.key) {
-      var big = S.key && (b.scene === 'cover' || b.scene === 'summary' || b.scene === 'title');
+      var big = !!S.key;
       clearTimeout(S.swap);
       if (big && !REDUCE) {
         stinger.classList.remove('go'); stinger.getBoundingClientRect(); stinger.classList.add('go');
         S.swap = setTimeout(function () { swapIn(b); }, 430);
       } else swapIn(b);
       S.key = key;
-    }
+    } else steps();
     hud(); updateBar(); updateDrawer();
   }
   function swapIn(b) {
@@ -625,11 +605,21 @@ button { font: inherit; color: inherit; cursor: pointer; }
     scenes.appendChild(sc);
     sc.getBoundingClientRect();
     sc.classList.add('in');
-    if (b.scene === 'cover') pulse(200, 300);
-    else if (b.scene === 'fact') pulse(155, 370, b.kind === 'known' ? '16,176,111' : '255,90,95');
-    else if (b.scene === 'claim') pulse(140, 200);
+    if (b.scene === 'issue') { pulse(170, 140); steps(); }
     else if (b.scene === 'summary') { countUp(sc); setTimeout(function () { burst(640, 200, ['#2b59ff', '#ffd84d', '#10b06f', '#ff5a5f', '#111318']); }, 300); }
-    if (b.scene === 'choice') paintChoice();
+    paintChoice();
+  }
+  // いまの拍までに出す段を st1〜st3 のクラスで開ける
+  var PULSE_AT = { 1: [330, 330], 2: [950, 330], 3: [640, 560] };
+  function steps() {
+    var sc = issueScene(); if (!sc) return;
+    var bs = beatsOf(S.pos), b = bs[S.beat];
+    for (var n = 1; n <= 3; n++) {
+      var on = bs.slice(0, S.beat + 1).some(function (x) { return x.st === n; });
+      if (on && !sc.classList.contains('st' + n) && PULSE_AT[n]) pulse(PULSE_AT[n][0], PULSE_AT[n][1]);
+      sc.classList.toggle('st' + n, on);
+    }
+    if (b.wait) paintChoice();
   }
 
   function roll(numStr, d) {
@@ -660,42 +650,38 @@ button { font: inherit; color: inherit; cursor: pointer; }
       items.forEach(function (x, i) { var li = a(el('li'), 300 + i * 70); li.append(el('b', null, pad(i + 1)), el('span', null, flat(x.title))); ol.append(li); });
       R.append(ol);
       sc.append(L, R);
-    } else if (b.scene === 'cover') {
-      sc.append(el('div', 'ghost', pad(S.pos + 1)), roll(pad(S.pos + 1), 80),
-        a(el('div', 'of', T.issue + '  ' + (S.pos + 1) + ' / ' + N), 250, 'translateX(-40px)'),
-        kin(it.title, '', 380, sizeFor(it.title, [[10, 76], [16, 66], [24, 56], [999, 46]])));
-      var sl = el('div', 'slash'); sl.style.setProperty('--d', '700ms'); sc.append(sl);
-    } else if (b.scene === 'question') {
-      var q = kin(it.question, '', 120, sizeFor(it.question, [[14, 66], [22, 58], [32, 50], [999, 42]]));
-      var ul = el('div', 'uline'); ul.style.setProperty('--d', (300 + Array.from(it.question).length * 24) + 'ms');
-      sc.append(el('div', 'ghost', '?'), a(el('div', 'kicker', T.question), 0, 'translateX(-40px)'), q, ul);
-      if (it.context) sc.append(a(el('div', 'ctx', it.context), 700 + Array.from(it.question).length * 24));
-    } else if (b.scene === 'claim') {
-      var cl = it.claims[b.k], lbl = el('div', 'shotlbl'), cnt = el('div', 'cnt');
-      cnt.append(document.createTextNode(String(b.k + 1)), el('i', null, ' / ' + it.claims.length));
-      lbl.append(a(el('div', 'kicker', T.claims), 0, 'translateX(-40px)'), a(cnt, 100));
-      sc.append(lbl, a(el('div', 'quote', '“'), 80), a(el('div', 'src', cl.source), 160),
-        kin(cl.text, '', 300, sizeFor(cl.text, [[12, 64], [20, 56], [28, 48], [999, 40]])));
-    } else if (b.scene === 'fact') {
-      var list = b.kind === 'known' ? (it.facts || []) : (it.unknowns || []), txt = list[b.k];
-      var lb = el('div', 'shotlbl'), ct = el('div', 'cnt');
-      ct.append(document.createTextNode(String(b.k + 1)), el('i', null, ' / ' + list.length));
-      lb.append(a(el('div', 'kicker', b.kind === 'known' ? T.known : T.unknown), 0, 'translateX(-40px)'), a(ct, 100));
-      var row = el('div', 'frow');
-      row.append(a(el('div', 'badge ' + b.kind, b.kind === 'known' ? '✓' : '?'), 80), kin(txt, '', 280, sizeFor(txt, [[10, 64], [16, 56], [24, 48], [999, 40]])));
-      sc.append(lb, row);
-    } else if (b.scene === 'choice') {
-      sc.append(a(el('div', 'kicker', T.choose), 0, 'translateX(-40px)'), a(el('p', 'remind', it.question), 80));
-      var rc = a(el('div', 'recap'), 160), chips = [];
-      (it.facts || []).forEach(function (f) { chips.push(['known', '✓ ' + f]); });
-      (it.unknowns || []).forEach(function (f) { chips.push(['unknown', '? ' + f]); });
-      chips.slice(0, 4).forEach(function (x) { rc.append(el('span', x[0], x[1])); });
-      if (chips.length > 4) rc.append(el('span', 'more', '+' + (chips.length - 4)));
-      if (chips.length) sc.append(rc);
-      var ops = el('div', 'opts');
+    } else if (b.scene === 'issue') {
+      var cl = it.claims || [], fx = it.facts || [], uk = it.unknowns || [];
+      var head = el('div', 'ihead'), hr = el('div'), ttl = el('div', 'ttl');
+      ttl.append(document.createTextNode(flat(it.title)), el('i', null, T.issue + ' ' + (S.pos + 1) + '/' + N));
+      hr.append(a(ttl, 250, 'translateX(-30px)'), kin(it.question, '', 380, sizeFor(it.question, [[14, 48], [20, 42], [28, 36], [999, 30]])));
+      head.append(roll(pad(S.pos + 1), 80), hr);
+      sc.append(el('div', 'ghost', pad(S.pos + 1)), head);
+      if (cl.length || fx.length || uk.length) {
+        var mid = el('div', 'mid');
+        mid.style.gridTemplateColumns = cl.length && (fx.length || uk.length) ? '1.15fr 1fr' : '1fr';
+        if (cl.length) {
+          var bx = el('div', 'sec1'), box = el('div', 'box b');
+          box.append(el('h4', null, T.claims));
+          cl.forEach(function (c, k) { var li = el('div', 'li b'); li.style.setProperty('--d', (140 + k * 110) + 'ms'); li.append(el('span', 'tag', c.source), el('span', null, c.text)); box.append(li); });
+          bx.append(box); mid.append(bx);
+        }
+        if (fx.length || uk.length) {
+          var fxw = el('div', 'sec2'), fbox = el('div', 'box b');
+          fbox.append(el('h4', null, fx.length ? T.known : T.unknown));
+          fx.map(function (f) { return ['known', f]; }).concat(uk.map(function (f) { return ['unknown', f]; })).forEach(function (x, k) {
+            var li = el('div', 'li b ' + x[0]); li.style.setProperty('--d', (140 + k * 110) + 'ms');
+            li.append(el('span', 'ic ' + x[0], x[0] === 'known' ? '✓' : '?'), el('span', null, x[1])); fbox.append(li);
+          });
+          fxw.append(fbox); mid.append(fxw);
+        }
+        sc.append(mid);
+      }
+      var sec3 = el('div', 'sec3'), ops = el('div', 'opts');
       ops.style.gridTemplateColumns = 'repeat(' + Math.min(it.options.length, 4) + ', 1fr)';
       it.options.forEach(function (o, k) {
-        var btn = a(el('button', 'opt'), 260 + k * 110);
+        var btn = el('button', 'opt b');
+        btn.style.setProperty('--d', (k * 100) + 'ms');
         btn.dataset.key = o.key;
         btn.append(el('span', 'k', o.key), el('span', 'lb', o.label));
         if (o.note) btn.append(el('span', 'nt', o.note));
@@ -703,7 +689,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
         btn.onclick = function () { choose(o.key, btn); };
         ops.append(btn);
       });
-      var alts = a(el('div', 'alts'), 300 + it.options.length * 110);
+      var brow = el('div', 'brow'), alts = el('div', 'alts b');
+      alts.style.setProperty('--d', (it.options.length * 100 + 60) + 'ms');
       [['other', T.other], ['later', T.later]].forEach(function (x, k) {
         var btn = el('button', 'alt ' + x[0]);
         btn.dataset.key = x[0];
@@ -717,7 +704,9 @@ button { font: inherit; color: inherit; cursor: pointer; }
       inp.onkeydown = function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(); } if (e.key === 'Escape') inp.blur(); };
       go_.onclick = commit;
       panel.append(res, inp, go_);
-      sc.append(ops, alts, panel);
+      brow.append(alts, panel);
+      sec3.append(ops, brow);
+      sc.append(sec3);
     } else if (b.scene === 'summary') {
       var head = el('div', 'head'), hl = el('div'), cnts = el('div', 'cnts');
       hl.append(a(el('div', 'kicker', T.summary), 0, 'translateX(-40px)'), kin(D.title || '', '', 120));
@@ -767,7 +756,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     return row;
   }
 
-  function choiceScene() { var sc = scenes.lastElementChild; return sc && sc.classList.contains('s-choice') && !sc.classList.contains('out') ? sc : null; }
+  function issueScene() { var sc = scenes.lastElementChild; return sc && sc.classList.contains('s-issue') && !sc.classList.contains('out') ? sc : null; }
+  function choiceScene() { var sc = issueScene(); return sc && sc.classList.contains('st3') ? sc : null; }
   function paintChoice() {
     var sc = choiceScene(); if (!sc) return;
     var x = answers[S.pos];
