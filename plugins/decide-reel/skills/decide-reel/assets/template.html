@@ -1,0 +1,722 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>decide-reel</title>
+<style>
+:root {
+  --ink: #16181d;
+  --sub: #5b6170;
+  --mute: #9aa0ac;
+  --line: #e4e6eb;
+  --soft: #f5f6f8;
+  --accent: #2b59ff;
+  --accent-soft: #eaf0ff;
+  --ok: #0f9d63;
+  --ok-soft: #e6f6ee;
+  --later: #b97a00;
+  --later-soft: #fdf4e1;
+  --other: #7a45f0;
+  --other-soft: #f1ebfe;
+  --outer: #e9ebef;
+  --bar: #ffffff;
+  --bar-ink: #16181d;
+  --bar-line: #dfe2e7;
+  --font: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Meiryo", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --outer: #121418; --bar: #1c1f25; --bar-ink: #e8eaee; --bar-line: #2c3038; }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--outer); font-family: var(--font); color: var(--ink); }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+/* ステージは1280x720で組んで、画面に合わせて拡大縮小する */
+#viewport { position: fixed; inset: 0 0 64px 0; }
+#stage {
+  position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px;
+  background: #fff; overflow: hidden; border-radius: 6px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, .14);
+  transform-origin: center;
+}
+
+/* 上の帯：資料名・進み具合・番号 */
+#hud { position: absolute; left: 0; right: 0; top: 0; height: 64px; display: flex; align-items: center; gap: 24px; padding: 0 40px; z-index: 5; }
+#hud .deck { font-size: 15px; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 340px; }
+#segs { flex: 1; display: flex; gap: 5px; }
+#segs i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; position: relative; }
+#segs i b { position: absolute; inset: 0; background: var(--accent); transform: scaleX(0); transform-origin: left; }
+#segs i.done b { transform: scaleX(1); }
+#hud .no { font-size: 15px; color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+#stage::after { content: ""; position: absolute; left: 40px; right: 40px; bottom: 36px; height: 1px; background: var(--line); }
+#foot { position: absolute; left: 40px; right: 40px; bottom: 10px; font-size: 12px; color: var(--mute); display: flex; justify-content: space-between; }
+
+/* 場面の切り替え */
+.scene { position: absolute; inset: 84px 80px 60px; transition: opacity .45s ease, transform .55s cubic-bezier(.2, .8, .2, 1); }
+.scene.pre { opacity: 0; transform: translateX(48px); }
+.scene.out { opacity: 0; transform: translateX(-48px); pointer-events: none; }
+.r { opacity: 0; transform: translateY(22px); transition: opacity .5s ease, transform .65s cubic-bezier(.2, .8, .2, 1); }
+.r.in { opacity: 1; transform: none; }
+.r.dim { opacity: .35; }
+.kicker { font-size: 18px; font-weight: 700; color: var(--accent); letter-spacing: .08em; margin: 0 0 18px; }
+.wipe { height: 6px; width: 120px; background: var(--accent); border-radius: 3px; transform: scaleX(0); transform-origin: left; transition: transform .9s cubic-bezier(.7, 0, .2, 1) .15s; }
+.in .wipe, .wipe.in { transform: scaleX(1); }
+
+/* 表紙 */
+.s-title { display: grid; grid-template-columns: 1.25fr 1fr; gap: 64px; align-items: center; }
+.s-title h1 { font-size: 54px; line-height: 1.25; margin: 22px 0 18px; letter-spacing: .01em; }
+.s-title .subt { font-size: 22px; color: var(--sub); line-height: 1.6; margin: 0 0 28px; }
+.s-title .meta { display: flex; gap: 22px; font-size: 17px; color: var(--sub); margin-bottom: 40px; }
+.s-title .meta b { color: var(--ink); }
+.startbtn { display: inline-flex; align-items: center; gap: 16px; border: 0; background: var(--accent); color: #fff; padding: 18px 34px 18px 26px; border-radius: 999px; font-size: 22px; font-weight: 700; box-shadow: 0 8px 24px rgba(43, 89, 255, .3); transition: transform .2s; }
+.startbtn:hover { transform: translateY(-2px); }
+.startbtn .tri { width: 0; height: 0; border-left: 18px solid #fff; border-top: 11px solid transparent; border-bottom: 11px solid transparent; }
+.agenda { background: var(--soft); border-radius: 18px; padding: 28px 30px; max-height: 470px; overflow: auto; }
+.agenda h3 { margin: 0 0 14px; font-size: 16px; color: var(--sub); letter-spacing: .08em; }
+.agenda ol { margin: 0; padding: 0; list-style: none; counter-reset: a; }
+.agenda li { counter-increment: a; display: flex; gap: 14px; padding: 11px 0; border-top: 1px solid var(--line); font-size: 19px; line-height: 1.45; }
+.agenda li:first-child { border-top: 0; }
+.agenda li::before { content: counter(a, decimal-leading-zero); color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* 章の扉 */
+.s-cover { display: flex; flex-direction: column; justify-content: center; }
+.s-cover .num { font-size: 150px; font-weight: 800; line-height: 1; color: var(--accent); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+.s-cover .of { font-size: 20px; color: var(--sub); margin: 18px 0 10px; letter-spacing: .1em; }
+.s-cover h2 { font-size: 56px; line-height: 1.3; margin: 0 0 28px; max-width: 1000px; }
+
+/* 決めること */
+.s-question { display: flex; flex-direction: column; justify-content: center; }
+.s-question .q { font-size: 46px; line-height: 1.5; font-weight: 700; max-width: 1040px; margin: 0; }
+.s-question .ctx { margin-top: 30px; font-size: 21px; color: var(--sub); line-height: 1.7; max-width: 980px; }
+.s-question .mark { position: absolute; right: -10px; top: -40px; font-size: 300px; font-weight: 800; color: var(--accent-soft); line-height: 1; z-index: -1; }
+
+/* 資料の言い分 */
+.claims { display: grid; gap: 22px; margin-top: 8px; }
+.claim { border: 1px solid var(--line); border-left: 6px solid var(--accent); border-radius: 14px; padding: 22px 26px; background: #fff; box-shadow: 0 4px 18px rgba(20, 30, 60, .06); }
+.claim .src { display: inline-block; font-size: 15px; font-weight: 700; color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 4px 14px; margin-bottom: 12px; }
+.claim p { margin: 0; font-size: 23px; line-height: 1.6; }
+.claims.dense .claim p { font-size: 19px; }
+.claims.dense .claim { padding: 16px 20px; }
+
+/* わかっていること */
+.facts { display: grid; gap: 40px; }
+.facts h3 { font-size: 18px; color: var(--sub); margin: 0 0 14px; letter-spacing: .06em; }
+.facts ul { list-style: none; margin: 0; padding: 0; }
+.facts li { display: flex; gap: 16px; align-items: flex-start; font-size: 23px; line-height: 1.55; padding: 14px 0; border-top: 1px solid var(--line); }
+.facts li .ic { flex: none; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 17px; font-weight: 800; margin-top: 3px; }
+.facts .known .ic { background: var(--ok-soft); color: var(--ok); }
+.facts .unknown .ic { background: var(--later-soft); color: var(--later); }
+.facts.dense li { font-size: 19px; padding: 10px 0; }
+
+/* 選ぶ */
+.s-choice .remind { font-size: 25px; font-weight: 700; line-height: 1.45; margin: 0 0 22px; }
+.opts { display: grid; gap: 18px; }
+.opt { position: relative; text-align: left; background: #fff; border: 2px solid var(--line); border-radius: 18px; padding: 20px 22px; transition: border-color .2s, box-shadow .2s, opacity .3s, transform .2s; }
+.opt:hover { border-color: #b9c6ff; transform: translateY(-2px); }
+.opt .k { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 12px; background: var(--soft); font-size: 22px; font-weight: 800; color: var(--accent); margin-bottom: 12px; }
+.opt .lb { display: block; font-size: 24px; font-weight: 700; line-height: 1.45; }
+.opt .nt { display: block; font-size: 17px; color: var(--sub); line-height: 1.55; margin-top: 8px; }
+.opt.sel { border-color: var(--accent); box-shadow: 0 0 0 5px var(--accent-soft); }
+.opt.sel .k { background: var(--accent); color: #fff; }
+.opts.chosen .opt:not(.sel) { opacity: .4; }
+.alts { display: flex; gap: 14px; margin-top: 18px; }
+.alt { border: 2px dashed var(--line); background: #fff; border-radius: 999px; padding: 12px 24px; font-size: 19px; font-weight: 700; color: var(--sub); transition: border-color .2s, background .2s; }
+.alt:hover { border-color: var(--mute); }
+.alt .k { display: inline-block; min-width: 22px; color: var(--mute); margin-right: 6px; font-variant-numeric: tabular-nums; }
+.alt.sel.other { border: 2px solid var(--other); background: var(--other-soft); color: var(--other); }
+.alt.sel.later { border: 2px solid var(--later); background: var(--later-soft); color: var(--later); }
+.opts.chosen ~ .alts .alt:not(.sel) { opacity: .45; }
+.panel { display: flex; align-items: center; gap: 16px; margin-top: 20px; padding: 16px 18px; background: var(--soft); border-radius: 16px; visibility: hidden; opacity: 0; transform: translateY(12px); transition: opacity .35s, transform .45s cubic-bezier(.2, .8, .2, 1); }
+.panel.show { visibility: visible; opacity: 1; transform: none; }
+.panel .res { flex: none; font-size: 19px; font-weight: 800; max-width: 380px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.panel input { flex: 1; min-width: 0; font: inherit; font-size: 19px; padding: 12px 16px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); outline: none; }
+.panel input:focus { border-color: var(--accent); }
+.panel input.bad { border-color: #e5484d; animation: shake .35s; }
+.panel .go { flex: none; border: 0; background: var(--accent); color: #fff; border-radius: 12px; padding: 13px 22px; font-size: 19px; font-weight: 700; }
+@keyframes shake { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+.stamp { position: absolute; right: 16px; top: 14px; font-size: 14px; font-weight: 800; color: var(--accent); border: 2px solid var(--accent); border-radius: 8px; padding: 2px 8px; transform: rotate(8deg) scale(1.6); opacity: 0; transition: transform .3s cubic-bezier(.3, 1.6, .5, 1), opacity .2s; }
+.opt.sel .stamp { transform: rotate(8deg) scale(1); opacity: 1; }
+
+/* まとめ */
+.s-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.s-summary h2 { font-size: 40px; margin: 0 0 18px; }
+.rows { max-height: 440px; overflow: auto; }
+.row { display: flex; align-items: center; gap: 14px; width: 100%; text-align: left; background: none; border: 0; border-top: 1px solid var(--line); padding: 13px 4px; font-size: 18px; }
+.row:hover { background: var(--soft); }
+.row .n { color: var(--accent); font-weight: 800; font-variant-numeric: tabular-nums; }
+.row .t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip { flex: none; font-size: 14px; font-weight: 700; border-radius: 999px; padding: 4px 12px; max-width: 260px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chip.done { background: var(--ok-soft); color: var(--ok); }
+.chip.other { background: var(--other-soft); color: var(--other); }
+.chip.later { background: var(--later-soft); color: var(--later); }
+.chip.open { background: var(--soft); color: var(--mute); }
+.copybox { display: flex; flex-direction: column; gap: 14px; }
+.copybox pre { flex: 1; margin: 0; background: var(--soft); border-radius: 14px; padding: 20px 22px; font-family: var(--font); font-size: 16px; line-height: 1.7; white-space: pre-wrap; overflow: auto; max-height: 420px; }
+.copybox .acts { display: flex; gap: 12px; }
+.copybtn { border: 0; background: var(--accent); color: #fff; border-radius: 12px; padding: 14px 24px; font-size: 19px; font-weight: 700; }
+.ghost { border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 12px 20px; font-size: 16px; color: var(--sub); }
+
+/* 目次 */
+#drawer { position: absolute; top: 0; right: 0; bottom: 0; width: 420px; background: #fff; box-shadow: -12px 0 40px rgba(0, 0, 0, .12); z-index: 20; padding: 28px 24px; overflow: auto; transform: translateX(105%); transition: transform .35s cubic-bezier(.2, .8, .2, 1); }
+#drawer.open { transform: none; }
+#drawer h3 { margin: 0 0 12px; font-size: 16px; color: var(--sub); letter-spacing: .08em; }
+#drawer .row.cur { background: var(--accent-soft); }
+
+#toast { position: absolute; left: 50%; bottom: 64px; transform: translate(-50%, 20px); background: var(--ink); color: #fff; padding: 12px 22px; border-radius: 999px; font-size: 17px; opacity: 0; transition: opacity .25s, transform .3s; z-index: 30; pointer-events: none; }
+#toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* 下の操作バー（ステージの外） */
+#bar { position: fixed; left: 0; right: 0; bottom: 0; height: 64px; background: var(--bar); color: var(--bar-ink); border-top: 1px solid var(--bar-line); display: flex; align-items: center; gap: 8px; padding: 0 16px; }
+#bar .grp { display: flex; align-items: center; gap: 4px; }
+#bar .sp { flex: 1; min-width: 8px; }
+.bb { border: 0; background: none; border-radius: 10px; height: 40px; min-width: 40px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
+.bb:hover { background: rgba(127, 127, 127, .14); }
+.bb svg { width: 20px; height: 20px; fill: currentColor; }
+.bb.off { opacity: .45; }
+.bb.play { background: var(--accent); color: #fff; min-width: 48px; }
+#dots { display: flex; gap: 6px; padding: 4px; overflow-x: auto; scrollbar-width: none; }
+#dots button { flex: none; width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--bar-line); background: none; font-size: 12px; font-weight: 700; color: var(--bar-ink); font-variant-numeric: tabular-nums; }
+#dots button.done { background: var(--ok); border-color: var(--ok); color: #fff; }
+#dots button.other { background: var(--other); border-color: var(--other); color: #fff; }
+#dots button.later { background: var(--later); border-color: var(--later); color: #fff; }
+#dots button.cur { box-shadow: 0 0 0 3px var(--accent); }
+@media (max-width: 720px) { .bb .lbl { display: none; } }
+@media (max-width: 520px) { #dots { display: none; } }
+</style>
+</head>
+<body>
+<div id="viewport">
+  <div id="stage">
+    <div id="hud"><div class="deck"></div><div id="segs"></div><div class="no"></div></div>
+    <div id="scenes"></div>
+    <div id="foot"><span class="l"></span><span class="r2"></span></div>
+    <div id="drawer"></div>
+    <div id="toast"></div>
+  </div>
+</div>
+<div id="bar">
+  <div class="grp">
+    <button class="bb" id="bPrev" title="前の論点（←）"><svg viewBox="0 0 24 24"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg></button>
+    <button class="bb play" id="bPlay" title="再生／一時停止（Space）"><svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg></button>
+    <button class="bb" id="bSkip" title="選ぶ画面へ／次の論点へ（→）"><svg viewBox="0 0 24 24"><path d="M4 5v14l11-7zM16 5h2v14h-2z"/></svg></button>
+  </div>
+  <div class="sp"></div>
+  <div id="dots"></div>
+  <div class="sp"></div>
+  <div class="grp">
+    <button class="bb" id="bMenu" title="目次（M）"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span class="lbl"></span></button>
+    <button class="bb" id="bNarr" title="ナレーション（V）"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1a7 7 0 0 0 6-6.9z"/></svg><span class="lbl"></span></button>
+    <button class="bb" id="bSe" title="効果音（S）"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg><span class="lbl"></span></button>
+    <button class="bb" id="bFull" title="全画面（F）"><svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg></button>
+  </div>
+</div>
+
+<script>const DATA = __DECIDE_REEL_DATA__;</script>
+<script>
+(function () {
+  'use strict';
+  var D = DATA;
+  var LANG = String(D.lang || 'ja').toLowerCase().indexOf('en') === 0 ? 'en' : 'ja';
+  var T = {
+    ja: {
+      start: 'はじめる', count: '決めること', items: '件', agenda: 'きょう決めること', issue: '論点',
+      question: '決めること', claims: '資料の言い分', known: 'わかっていること', unknown: 'まだわからないこと',
+      choose: 'どれにする？', other: 'その他', later: 'あとで決める', next: '次へ', finish: 'まとめへ',
+      memo: 'メモ（任意）', otherMemo: 'どう決めた？（必須）', laterMemo: '誰がいつまでに決める？',
+      summary: 'まとめ', copy: '回答をコピー', copied: 'コピーしました', reset: '回答をリセット',
+      resetQ: 'このページの回答をすべて消しますか？', restart: '最初から', menu: '目次', narr: '声', se: '音',
+      cover: '表紙', decided: '■ 決まったこと', laterH: '■ あとで決めること', openH: '■ 未回答',
+      pick: '選んでください', open: '未回答', head: '決めたこと',
+      sayCover: function (i, t) { return '論点' + (i + 1) + '。' + t; },
+      sayClaims: '資料の言い分です。', sayFacts: 'わかっていることです。', sayUnknown: 'まだわからないこと。',
+      sayChoose: 'どれにしますか？', saySummary: 'おつかれさまでした。決めたことをまとめました。'
+    },
+    en: {
+      start: 'Start', count: 'Decisions', items: '', agenda: 'To decide today', issue: 'Issue',
+      question: 'The decision', claims: 'What the sources say', known: 'What we know', unknown: 'Still unknown',
+      choose: 'Which one?', other: 'Other', later: 'Decide later', next: 'Next', finish: 'To summary',
+      memo: 'Note (optional)', otherMemo: 'What did you decide? (required)', laterMemo: 'Who decides, by when?',
+      summary: 'Summary', copy: 'Copy answers', copied: 'Copied', reset: 'Reset answers',
+      resetQ: 'Clear all answers on this page?', restart: 'Restart', menu: 'Menu', narr: 'Voice', se: 'Sound',
+      cover: 'Cover', decided: '■ Decided', laterH: '■ Decide later', openH: '■ Unanswered',
+      pick: 'Pick one first', open: 'Open', head: 'Decisions',
+      sayCover: function (i, t) { return 'Issue ' + (i + 1) + '. ' + t; },
+      sayClaims: 'Here is what the sources say.', sayFacts: 'Here is what we know.', sayUnknown: 'Still unknown.',
+      sayChoose: 'Which one should we pick?', saySummary: 'Nice work. Here is the summary.'
+    }
+  }[LANG];
+  document.documentElement.lang = LANG;
+
+  var items = D.items || [];
+  var N = items.length;
+  var STORE = 'decide-reel:' + (D.id || (D.title + '|' + (D.date || '')));
+
+  // ---- 小物 ----
+  function $(s, root) { return (root || document).querySelector(s); }
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } }
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(answers)); } catch (e) {} }
+  var answers = load();
+  var toastTimer;
+  function toast(msg) {
+    var t = $('#toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1600);
+  }
+
+  // ---- 効果音（WebAudioで合成。音声ファイルは使わない） ----
+  var ac = null;
+  function audio() {
+    if (!ac) { try { ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return null; } }
+    if (ac.state === 'suspended') ac.resume();
+    return ac;
+  }
+  function tone(f0, f1, start, dur, type, vol) {
+    var a = audio(); if (!a) return;
+    var t = a.currentTime + start, o = a.createOscillator(), g = a.createGain();
+    o.type = type || 'sine';
+    o.frequency.setValueAtTime(f0, t);
+    if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(vol || .12, t + .012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + .02);
+  }
+  function whoosh() {
+    var a = audio(); if (!a) return;
+    var len = .42, buf = a.createBuffer(1, a.sampleRate * len, a.sampleRate), d = buf.getChannelData(0);
+    for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    var src = a.createBufferSource(), bp = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime;
+    src.buffer = buf; bp.type = 'bandpass'; bp.Q.value = 1.1;
+    bp.frequency.setValueAtTime(350, t); bp.frequency.exponentialRampToValueAtTime(2600, t + len);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(.16, t + .14); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+    src.connect(bp).connect(g).connect(a.destination); src.start(t);
+  }
+  var SE = {
+    whoosh: whoosh,
+    pop: function () { tone(620, 1180, 0, .09, 'sine', .1); },
+    tick: function () { tone(1700, 0, 0, .03, 'square', .025); },
+    pause: function () { tone(880, 0, 0, .12, 'triangle', .08); tone(660, 0, .1, .2, 'triangle', .08); },
+    pick: function () { tone(523, 0, 0, .14, 'triangle', .12); tone(784, 0, .08, .3, 'triangle', .12); },
+    later: function () { tone(440, 0, 0, .14, 'triangle', .1); tone(392, 0, .1, .25, 'triangle', .1); },
+    fanfare: function () { [523, 659, 784, 1047].forEach(function (f, i) { tone(f, 0, i * .11, i === 3 ? .6 : .16, 'triangle', .11); }); }
+  };
+  function sfx(name) { if (S.se && SE[name]) SE[name](); }
+
+  // ---- ナレーション（ブラウザの読み上げ。端末内の声を優先） ----
+  var voice = null;
+  function pickVoice() {
+    if (!('speechSynthesis' in window)) return;
+    var want = D.voiceLang || (LANG === 'en' ? 'en' : 'ja');
+    var vs = speechSynthesis.getVoices().filter(function (v) { return v.lang.replace('_', '-').toLowerCase().indexOf(want.toLowerCase()) === 0; });
+    voice = vs.filter(function (v) { return v.localService; })[0] || vs[0] || null;
+  }
+  if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function speak(text, done) {
+    var u = new SpeechSynthesisUtterance(text), fired = false;
+    if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = LANG === 'en' ? 'en-US' : 'ja-JP'; }
+    u.rate = D.rate || 1.05;
+    function fin() { if (fired) return; fired = true; clearTimeout(guard); done(); }
+    // onend が来ないブラウザがあるので保険のタイマーを置く
+    var guard = setTimeout(fin, estimate(text) * 2 + 4000);
+    u.onend = fin; u.onerror = fin;
+    speechSynthesis.speak(u);
+  }
+  function hush() { if ('speechSynthesis' in window) speechSynthesis.cancel(); }
+  function estimate(text) {
+    var n = String(text || '').length;
+    return Math.min(9000, Math.max(2200, 1300 + n * (LANG === 'en' ? 45 : 95)));
+  }
+
+  // ---- 進行 ----
+  var S = { pos: -1, beat: 0, playing: false, narr: D.narration !== false && 'speechSynthesis' in window, se: D.sound !== false, token: 0, timer: null, key: '' };
+  var cache = {};
+  function beatsOf(pos) {
+    if (pos < 0) return [{ scene: 'title' }];
+    if (pos >= N) return [{ scene: 'summary', say: T.saySummary, se: 'fanfare' }];
+    if (cache[pos]) return cache[pos];
+    var it = items[pos], b = [];
+    b.push({ scene: 'cover', say: T.sayCover(pos, it.title), se: 'whoosh' });
+    b.push({ scene: 'question', say: it.question, se: 'whoosh' });
+    var cl = it.claims || [];
+    cl.forEach(function (c, k) {
+      b.push({ scene: 'claims', reveal: k, se: k ? 'pop' : 'whoosh', say: (k ? '' : T.sayClaims) + (c.say || (c.source + (LANG === 'en' ? ': ' : '。') + c.text)) });
+    });
+    var fx = it.facts || [], uk = it.unknowns || [];
+    fx.forEach(function (f, k) { b.push({ scene: 'facts', reveal: k, se: k ? 'pop' : 'whoosh', say: (k ? '' : T.sayFacts) + f }); });
+    uk.forEach(function (f, k) { b.push({ scene: 'facts', reveal: fx.length + k, se: (fx.length + k) ? 'pop' : 'whoosh', say: (k ? '' : T.sayUnknown) + f }); });
+    b.push({ scene: 'choice', say: it.choiceSay || T.sayChoose, se: 'whoosh', wait: true });
+    return (cache[pos] = b);
+  }
+  function cur() { return beatsOf(S.pos)[S.beat]; }
+
+  function go(pos, beat, play) {
+    pos = Math.max(-1, Math.min(N, pos));
+    S.token++; clearTimeout(S.timer); hush();
+    S.pos = pos; S.beat = beat || 0;
+    if (play != null) S.playing = play;
+    render();
+    run();
+  }
+  function run() {
+    var b = cur(), tok = S.token;
+    if (b.se) sfx(b.se);
+    if (b.wait || b.scene === 'summary' || b.scene === 'title') {
+      if (b.wait) setTimeout(function () { if (tok === S.token) sfx('pause'); }, 450);
+      S.playing = false; updateBar();
+      fillSeg(true, 0);
+      if (S.narr && b.say && b.scene !== 'title') speak(b.say, function () {});
+      return;
+    }
+    if (!S.playing) { fillSeg(false, 0); return; }
+    var ms = estimate(b.say);
+    fillSeg(false, ms);
+    function next() {
+      if (tok !== S.token || !S.playing) return;
+      S.timer = setTimeout(function () { if (tok === S.token && S.playing) step(1); }, 450);
+    }
+    if (S.narr && b.say) speak(b.say, next);
+    else S.timer = setTimeout(function () { if (tok === S.token && S.playing) step(1); }, ms);
+  }
+  function step(d) {
+    var bs = beatsOf(S.pos);
+    if (S.beat + d >= 0 && S.beat + d < bs.length) go(S.pos, S.beat + d);
+    else if (d > 0) go(S.pos + 1, 0);
+  }
+  function togglePlay() {
+    var b = cur();
+    if (b.scene === 'title') return start();
+    if (b.wait) {
+      if (answers[S.pos]) return commit();
+      sfx('tick'); return toast(T.pick);
+    }
+    if (b.scene === 'summary') return;
+    S.playing = !S.playing;
+    if (S.playing) go(S.pos, S.beat, true);
+    else { S.token++; clearTimeout(S.timer); hush(); fillSeg(false, 0); updateBar(); }
+  }
+  function skip() {
+    var b = cur();
+    if (b.scene === 'title') return start();
+    if (b.wait) return answers[S.pos] ? commit() : go(S.pos + 1, 0, true);
+    if (b.scene === 'summary') return;
+    var bs = beatsOf(S.pos);
+    go(S.pos, bs.length - 1);
+  }
+  function prevChapter() {
+    if (S.pos >= 0 && S.beat > 1) return go(S.pos, 0, S.playing);
+    go(S.pos - 1, 0, S.pos - 1 >= 0 && S.playing);
+  }
+  function start() { audio(); go(0, 0, true); }
+
+  // ---- 描画 ----
+  var scenes = $('#scenes');
+  function render() {
+    var b = cur(), key = S.pos + ':' + b.scene;
+    if (key !== S.key) {
+      var old = scenes.lastElementChild;
+      if (old) { old.classList.add('out'); setTimeout(function () { old.remove(); }, 600); }
+      var sc = build(b.scene);
+      sc.classList.add('scene', 'pre');
+      scenes.appendChild(sc);
+      sc.getBoundingClientRect();
+      sc.classList.remove('pre');
+      S.key = key;
+    }
+    reveal(b.reveal == null ? 99 : b.reveal);
+    hud(); updateBar(); updateDrawer();
+  }
+  function reveal(n) {
+    var sc = scenes.lastElementChild, rs = sc.querySelectorAll('.r');
+    for (var i = 0; i < rs.length; i++) {
+      var idx = rs[i].dataset.i == null ? -1 : +rs[i].dataset.i;
+      var show = idx <= n;
+      if (show && !rs[i].classList.contains('in')) {
+        // 同時に出る要素は少しずつずらす
+        (function (r, delay) { setTimeout(function () { r.classList.add('in'); }, delay); })(rs[i], 60 + (idx < 0 ? i * 90 : 0));
+      } else if (!show) rs[i].classList.remove('in');
+    }
+  }
+  function r(node, i) { node.classList.add('r'); if (i != null) node.dataset.i = i; return node; }
+
+  function build(kind) {
+    var it = items[S.pos], sc = el('div', 's-' + kind);
+    if (kind === 'title') {
+      var L = el('div'), R = el('div');
+      L.append(r(el('div', 'kicker', D.kicker || 'decide-reel')), r(el('div', 'wipe')), r(el('h1', null, D.title || '')));
+      if (D.subtitle) L.append(r(el('p', 'subt', D.subtitle)));
+      var meta = r(el('div', 'meta'));
+      if (D.date) meta.append(el('span', null, D.date));
+      var c = el('span', null, T.count + ' '); c.append(el('b', null, N + T.items)); meta.append(c);
+      L.append(meta);
+      var sb = r(el('button', 'startbtn')); sb.append(el('span', 'tri'), el('span', null, T.start)); sb.onclick = start;
+      L.append(sb);
+      var ag = r(el('div', 'agenda')), ol = el('ol');
+      ag.append(el('h3', null, T.agenda));
+      items.forEach(function (x) { ol.append(el('li', null, x.title)); });
+      ag.append(ol); R.append(ag);
+      sc.append(L, R);
+    } else if (kind === 'cover') {
+      sc.append(r(el('div', 'num', pad(S.pos + 1))), r(el('div', 'of', T.issue + ' ' + (S.pos + 1) + ' / ' + N)), r(el('h2', null, it.title)), r(el('div', 'wipe')));
+    } else if (kind === 'question') {
+      sc.append(el('div', 'mark', '?'), r(el('div', 'kicker', T.question)), r(el('p', 'q', it.question)));
+      if (it.context) sc.append(r(el('div', 'ctx', it.context)));
+    } else if (kind === 'claims') {
+      var cl = it.claims || [], g = el('div', 'claims' + (cl.length > 3 ? ' dense' : ''));
+      g.style.gridTemplateColumns = 'repeat(' + (cl.length <= 3 ? cl.length : 2) + ', 1fr)';
+      cl.forEach(function (c, k) {
+        var card = r(el('div', 'claim'), k);
+        card.append(el('span', 'src', c.source), el('p', null, c.text));
+        g.append(card);
+      });
+      sc.append(r(el('div', 'kicker', T.claims)), g);
+    } else if (kind === 'facts') {
+      var fx = it.facts || [], uk = it.unknowns || [];
+      var f = el('div', 'facts' + (fx.length + uk.length > 5 ? ' dense' : ''));
+      f.style.gridTemplateColumns = fx.length && uk.length ? '1fr 1fr' : '1fr';
+      function col(list, cls, head, mark, off) {
+        if (!list.length) return;
+        var box = el('div', cls), ul = el('ul');
+        box.append(r(el('h3', null, head), off));
+        list.forEach(function (s, k) {
+          var li = r(el('li'), off + k);
+          li.append(el('span', 'ic', mark), el('span', null, s));
+          ul.append(li);
+        });
+        box.append(ul); f.append(box);
+      }
+      col(fx, 'known', T.known, '✓', 0);
+      col(uk, 'unknown', T.unknown, '?', fx.length);
+      sc.append(f);
+    } else if (kind === 'choice') {
+      sc.append(r(el('div', 'kicker', T.choose)), r(el('p', 'remind', it.question)));
+      var ops = el('div', 'opts');
+      ops.style.gridTemplateColumns = 'repeat(' + Math.min(it.options.length, 4) + ', 1fr)';
+      it.options.forEach(function (o, k) {
+        var b = r(el('button', 'opt'));
+        b.dataset.key = o.key;
+        b.append(el('span', 'k', o.key), el('span', 'lb', o.label));
+        if (o.note) b.append(el('span', 'nt', o.note));
+        b.append(el('span', 'stamp', LANG === 'en' ? 'PICK' : '決定'));
+        b.title = (k + 1) + '';
+        b.onclick = function () { choose(o.key); };
+        ops.append(b);
+      });
+      var alts = r(el('div', 'alts'));
+      [['other', T.other], ['later', T.later]].forEach(function (a, k) {
+        var b = el('button', 'alt ' + a[0]);
+        b.dataset.key = a[0];
+        b.append(el('span', 'k', String(it.options.length + k + 1)), document.createTextNode(a[1]));
+        b.onclick = function () { choose(a[0]); };
+        alts.append(b);
+      });
+      var panel = el('div', 'panel'), res = el('div', 'res'), inp = el('input'), go_ = el('button', 'go', S.pos + 1 < N ? T.next + ' →' : T.finish + ' →');
+      inp.type = 'text';
+      inp.oninput = function () { if (answers[S.pos]) { answers[S.pos].memo = inp.value; inp.classList.remove('bad'); save(); } };
+      inp.onkeydown = function (e) { if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); commit(); } if (e.key === 'Escape') inp.blur(); };
+      go_.onclick = commit;
+      panel.append(res, inp, go_);
+      sc.append(ops, alts, panel);
+      setTimeout(paintChoice, 0);
+    } else if (kind === 'summary') {
+      var L2 = el('div'), R2 = el('div', 'copybox r');
+      L2.append(r(el('div', 'kicker', T.summary)), r(el('h2', null, D.title)));
+      var rows = r(el('div', 'rows'));
+      items.forEach(function (x, i) { rows.append(rowFor(i, function () { go(i, beatsOf(i).length - 1, false); })); });
+      L2.append(rows);
+      var pre = el('pre', null, summaryText()), acts = el('div', 'acts');
+      var cb = el('button', 'copybtn', T.copy); cb.onclick = function () { copy(pre.textContent); };
+      var rs = el('button', 'ghost', T.restart); rs.onclick = function () { go(-1, 0, false); };
+      var rz = el('button', 'ghost', T.reset); rz.onclick = function () { if (confirm(T.resetQ)) { answers = {}; save(); S.key = ''; render(); } };
+      acts.append(cb, rs, rz);
+      R2.append(pre, acts);
+      sc.append(L2, R2);
+    }
+    return sc;
+  }
+
+  function status(i) {
+    var a = answers[i];
+    if (!a) return { cls: 'open', text: T.open };
+    if (a.choice === 'later') return { cls: 'later', text: T.later };
+    if (a.choice === 'other') return { cls: 'other', text: T.other + (a.memo ? '：' + a.memo : '') };
+    var o = items[i].options.filter(function (x) { return x.key === a.choice; })[0];
+    return { cls: 'done', text: a.choice + '. ' + (o ? o.label : '') };
+  }
+  function rowFor(i, onclick) {
+    var st = status(i), row = el('button', 'row');
+    row.append(el('span', 'n', i < 0 || i >= N ? '' : pad(i + 1)), el('span', 't', i < 0 ? T.cover : i >= N ? T.summary : items[i].title));
+    if (i >= 0 && i < N) row.append(el('span', 'chip ' + st.cls, st.text));
+    row.onclick = onclick;
+    return row;
+  }
+
+  function paintChoice() {
+    var sc = scenes.lastElementChild; if (!sc || !sc.classList.contains('s-choice')) return;
+    var a = answers[S.pos], it = items[S.pos];
+    var bs = sc.querySelectorAll('.opt, .alt');
+    for (var i = 0; i < bs.length; i++) bs[i].classList.toggle('sel', !!a && bs[i].dataset.key === a.choice);
+    $('.opts', sc).classList.toggle('chosen', !!a);
+    var panel = $('.panel', sc), inp = $('input', panel);
+    panel.classList.toggle('show', !!a);
+    if (!a) return;
+    var st = status(S.pos);
+    $('.res', panel).textContent = a.choice === 'other' ? T.other : st.text;
+    $('.res', panel).style.color = 'var(--' + (st.cls === 'done' ? 'accent' : st.cls) + ')';
+    inp.placeholder = a.choice === 'other' ? T.otherMemo : a.choice === 'later' ? T.laterMemo : T.memo;
+    if (document.activeElement !== inp) inp.value = a.memo || '';
+  }
+  function choose(key) {
+    var a = answers[S.pos] || {};
+    answers[S.pos] = { choice: key, memo: a.memo || '' };
+    save();
+    hush();
+    sfx(key === 'later' ? 'later' : 'pick');
+    paintChoice(); updateBar(); updateDrawer();
+    if (key === 'other') setTimeout(function () { $('.panel input', scenes.lastElementChild).focus(); }, 50);
+  }
+  function commit() {
+    var a = answers[S.pos];
+    if (!a) { sfx('tick'); return toast(T.pick); }
+    var inp = $('.panel input', scenes.lastElementChild);
+    if (a.choice === 'other' && !String(a.memo || '').trim()) { inp.classList.remove('bad'); inp.getBoundingClientRect(); inp.classList.add('bad'); inp.focus(); return; }
+    if (inp) inp.blur();
+    go(S.pos + 1, 0, true);
+  }
+
+  function summaryText() {
+    var head = '【' + D.title + '】' + T.head + (D.date ? (LANG === 'en' ? ' (' + D.date + ')' : '（' + D.date + '）') : '');
+    var out = [head], dec = [], lat = [], opn = [];
+    items.forEach(function (it, i) {
+      var a = answers[i];
+      if (!a) opn.push(i); else if (a.choice === 'later') lat.push(i); else dec.push(i);
+    });
+    if (dec.length) {
+      out.push('', T.decided);
+      dec.forEach(function (i, n) {
+        var a = answers[i], st = status(i);
+        out.push((n + 1) + '. ' + items[i].title + (LANG === 'en' ? ': ' : '：') + st.text);
+        if (a.choice !== 'other' && a.memo) out.push('   ' + (LANG === 'en' ? 'Note: ' : 'メモ：') + a.memo);
+      });
+    }
+    if (lat.length) {
+      out.push('', T.laterH);
+      lat.forEach(function (i) { var m = answers[i].memo; out.push('・' + items[i].title + (m ? (LANG === 'en' ? ' (' + m + ')' : '（' + m + '）') : '')); });
+    }
+    if (opn.length) {
+      out.push('', T.openH);
+      opn.forEach(function (i) { out.push('・' + items[i].title); });
+    }
+    return out.join('\n');
+  }
+  function copy(text) {
+    function fallback() {
+      var ta = el('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.append(ta); ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      ta.remove(); done();
+    }
+    function done() { sfx('pick'); toast(T.copied); }
+    if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(text).then(done, fallback);
+    else fallback();
+  }
+
+  // ---- 上の帯・下のバー・目次 ----
+  function hud() {
+    $('#hud .deck').textContent = D.title || '';
+    var segs = $('#segs'); segs.innerHTML = '';
+    var inChapter = S.pos >= 0 && S.pos < N;
+    $('#hud .no').textContent = inChapter ? pad(S.pos + 1) + ' / ' + pad(N) : '';
+    $('#foot .l').textContent = D.footer || '';
+    $('#foot .r2').textContent = inChapter ? items[S.pos].title : '';
+    if (!inChapter) return;
+    beatsOf(S.pos).forEach(function (b, k) {
+      var s = el('i', k < S.beat ? 'done' : ''); s.append(el('b')); segs.append(s);
+    });
+  }
+  function fillSeg(full, ms) {
+    var s = $('#segs').children[S.beat]; if (!s) return;
+    var b = s.firstChild;
+    b.style.transition = 'none'; b.style.transform = full ? 'scaleX(1)' : 'scaleX(0)';
+    if (ms) { b.getBoundingClientRect(); b.style.transition = 'transform ' + ms + 'ms linear'; b.style.transform = 'scaleX(1)'; }
+  }
+  var ICON_PLAY = '<svg viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></svg>';
+  var ICON_PAUSE = '<svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zm8 0h4v16h-4z"/></svg>';
+  function updateBar() {
+    $('#bPlay').innerHTML = S.playing ? ICON_PAUSE : ICON_PLAY;
+    $('#bNarr').classList.toggle('off', !S.narr);
+    $('#bSe').classList.toggle('off', !S.se);
+    $('#bNarr .lbl').textContent = T.narr + (S.narr ? ' ON' : ' OFF');
+    $('#bSe .lbl').textContent = T.se + (S.se ? ' ON' : ' OFF');
+    $('#bMenu .lbl').textContent = T.menu;
+    var dots = $('#dots');
+    if (dots.children.length !== N) {
+      dots.innerHTML = '';
+      items.forEach(function (it, i) {
+        var d = el('button', null, String(i + 1)); d.title = it.title;
+        d.onclick = function () { audio(); go(i, 0, true); };
+        dots.append(d);
+      });
+    }
+    for (var i = 0; i < N; i++) dots.children[i].className = status(i).cls + (i === S.pos ? ' cur' : '');
+  }
+  function updateDrawer() {
+    var dr = $('#drawer'); if (!dr.classList.contains('open')) return;
+    dr.innerHTML = ''; dr.append(el('h3', null, T.menu));
+    for (var i = -1; i <= N; i++) {
+      (function (i) {
+        var row = rowFor(i, function () { dr.classList.remove('open'); go(i, 0, i >= 0 && i < N); });
+        if (i === S.pos) row.classList.add('cur');
+        dr.append(row);
+      })(i);
+    }
+  }
+  function toggleMenu() { var dr = $('#drawer'); dr.classList.toggle('open'); updateDrawer(); }
+
+  $('#bPlay').onclick = togglePlay;
+  $('#bSkip').onclick = skip;
+  $('#bPrev').onclick = prevChapter;
+  $('#bMenu').onclick = toggleMenu;
+  $('#bNarr').onclick = function () { S.narr = !S.narr; if (!S.narr) hush(); updateBar(); if (S.playing) go(S.pos, S.beat, true); };
+  $('#bSe').onclick = function () { S.se = !S.se; updateBar(); };
+  $('#bFull').onclick = function () {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+  };
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.metaKey || e.ctrlKey || e.altKey) return;
+    var b = cur(), k = e.key;
+    if (k === ' ') { e.preventDefault(); togglePlay(); }
+    else if (k === 'ArrowRight') skip();
+    else if (k === 'ArrowLeft') prevChapter();
+    else if (k === 'Enter' && b.wait) commit();
+    else if (k === 'Enter' && b.scene === 'title') start();
+    else if (k === 'm' || k === 'M') toggleMenu();
+    else if (k === 'v' || k === 'V') $('#bNarr').click();
+    else if (k === 's' || k === 'S') $('#bSe').click();
+    else if (k === 'f' || k === 'F') $('#bFull').click();
+    else if (k === 'Escape') $('#drawer').classList.remove('open');
+    else if (b.wait && /^[1-9]$/.test(k)) {
+      var it = items[S.pos], n = +k - 1, keys = it.options.map(function (o) { return o.key; }).concat(['other', 'later']);
+      if (keys[n]) { e.preventDefault(); choose(keys[n]); }
+    }
+  });
+
+  function fit() {
+    var W = innerWidth, H = innerHeight - 64, s = Math.min(W / 1280, H / 720) * .96;
+    $('#stage').style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+  addEventListener('resize', fit);
+  fit();
+  document.title = D.title || 'decide-reel';
+  go(-1, 0, false);
+})();
+</script>
+</body>
+</html>

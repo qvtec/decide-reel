@@ -1,0 +1,11 @@
+{
+  "name": "decide-reel",
+  "owner": { "name": "qvtec" },
+  "plugins": [
+    {
+      "name": "decide-reel",
+      "source": "./plugins/decide-reel",
+      "description": "MTGで決めることを1件ずつ動画風に見せて止まり、A/B/C・その他・あとで決める から選んで、最後に回答をコピーできるページを作るスキル"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "name": "decide-reel",
+  "version": "0.1.0",
+  "description": "MTGで決めることを1件ずつ動画風に見せて止まり、A/B/C・その他・あとで決める から選んで、最後に回答をコピーできるページを作るスキル",
+  "author": { "name": "qvtec" },
+  "license": "MIT",
+  "keywords": ["meeting", "decision", "presentation", "skill"]
+}
