@@ -1,51 +1,133 @@
 {
   "title": "勉強会、来期の進め方",
-  "subtitle": "アンケートと前回のふりかえりから、3つのことを決めます",
+  "subtitle": "アンケートと前回のふりかえりから、3つ決めます",
   "date": "2026-11-05",
   "lang": "ja",
   "items": [
     {
       "title": "開催の頻度",
       "question": "来期は、月に何回ひらく？",
-      "context": "今期は隔週。後半は発表者が見つからず2回中止に。",
+      "narrate": "希望は隔週が少し多め。ただ、回数より中身を厚くしたい声もあります",
+      "figure": {
+        "type": "bars",
+        "title": "アンケート（21人）",
+        "unit": "人",
+        "data": [
+          {
+            "label": "隔週",
+            "value": 12
+          },
+          {
+            "label": "月1",
+            "value": 9
+          }
+        ]
+      },
       "claims": [
-        { "source": "アンケート", "text": "隔週派12人、月1派9人" },
-        { "source": "ふりかえり", "text": "回数より中身を厚く" }
+        {
+          "source": "ふりかえり",
+          "text": "回数より中身を厚く"
+        }
       ],
-      "facts": ["平均参加は14人", "中止の2回は締め日と重なった"],
-      "unknowns": ["来期の発表希望者の数"],
+      "unknowns": [
+        "来期の発表希望者の数"
+      ],
       "options": [
-        { "key": "A", "label": "隔週のまま", "note": "習慣は保てる。発表者集めが残る" },
-        { "key": "B", "label": "月1回", "note": "準備に時間をかけられる" },
-        { "key": "C", "label": "月1＋もくもく会", "note": "残りの回は自習の場に" }
+        {
+          "key": "A",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='10' width='36' height='32' rx='5'/><path d='M6 20h36M16 6v8M32 6v8'/><circle cx='17' cy='31' r='4' fill='#2b59ff' stroke='none'/><circle cx='31' cy='31' r='4' fill='#2b59ff' stroke='none'/></svg>",
+          "label": "隔週のまま",
+          "note": "発表者集めは残る"
+        },
+        {
+          "key": "B",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='10' width='36' height='32' rx='5'/><path d='M6 20h36M16 6v8M32 6v8'/><circle cx='24' cy='31' r='5' fill='#2b59ff' stroke='none'/></svg>",
+          "label": "月1回",
+          "note": "準備に時間をかけられる"
+        },
+        {
+          "key": "C",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><rect x='9' y='10' width='30' height='20' rx='3'/><path d='M4 38h40l-4-8H8z'/><path d='M18 20l4 4 8-8' stroke='#2b59ff'/></svg>",
+          "label": "月1＋もくもく会"
+        }
       ]
     },
     {
       "title": "発表者の決め方",
       "question": "発表者は、どうやって決める？",
+      "narrate": "今期は半分を常連の3人が担当。指名されれば話す人は7人います",
+      "figure": {
+        "type": "donut",
+        "title": "今期の発表（12回）",
+        "unit": "回",
+        "data": [
+          {
+            "label": "常連3人",
+            "value": 6
+          },
+          {
+            "label": "ほかの人",
+            "value": 6
+          }
+        ]
+      },
       "claims": [
-        { "source": "アンケート", "text": "指名なら話す人が7人" },
-        { "source": "運営メモ", "text": "立候補だけだと同じ3人に偏る" }
+        {
+          "source": "アンケート",
+          "text": "指名なら話す人が7人"
+        }
       ],
-      "facts": ["3人で6回を担当"],
       "options": [
-        { "key": "A", "label": "立候補のみ", "note": "いまと同じ" },
-        { "key": "B", "label": "持ち回り", "note": "名簿順に全員が担当" },
-        { "key": "C", "label": "立候補＋指名", "note": "2週間前に空きを運営が埋める" }
+        {
+          "key": "A",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='18' cy='13' r='6'/><path d='M8 42v-9a10 10 0 0 1 20 0v9'/><path d='M27 26l9-17' stroke='#2b59ff'/></svg>",
+          "label": "立候補のみ"
+        },
+        {
+          "key": "B",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M39 19A16 16 0 0 0 10 14'/><path d='M9 5v10h10'/><path d='M9 29a16 16 0 0 0 29 5'/><path d='M39 43V33H29'/><circle cx='24' cy='24' r='3' fill='#2b59ff' stroke='none'/></svg>",
+          "label": "持ち回り",
+          "note": "名簿順に全員"
+        },
+        {
+          "key": "C",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><circle cx='15' cy='14' r='5'/><path d='M6 40v-7a9 9 0 0 1 18 0v7'/><circle cx='34' cy='17' r='4' stroke='#2b59ff'/><path d='M27 40v-5a7 7 0 0 1 14 0v5' stroke='#2b59ff'/></svg>",
+          "label": "立候補＋指名",
+          "note": "空きを運営が埋める"
+        }
       ]
     },
     {
       "title": "録画の公開範囲",
       "question": "録画は、どこまで公開する？",
+      "narrate": "社内限定なら情シスの条件は満たせます。見返したい声もあります",
+      "figure": {
+        "type": "svg",
+        "title": "社内限定にすると",
+        "svg": "<svg viewBox='0 0 560 220' fill='none' stroke='#111318' stroke-width='4' stroke-linecap='round' stroke-linejoin='round' font-size='22' font-weight='800'><rect x='20' y='82' width='78' height='54' rx='10'/><path d='M98 99l30-15v50l-30-15z'/><circle cx='40' cy='100' r='5' fill='#ff5a5f' stroke='none'/><text x='74' y='176' text-anchor='middle' fill='#111318' stroke='none'>録画</text><path d='M148 109h58M192 95l14 14-14 14'/><rect x='226' y='30' width='174' height='160' rx='18' fill='#e8eeff' stroke='#2b59ff'/><text x='313' y='66' text-anchor='middle' fill='#2b59ff' stroke='none'>社内</text><circle cx='270' cy='108' r='10'/><path d='M254 150a16 16 0 0 1 32 0'/><circle cx='313' cy='108' r='10'/><path d='M297 150a16 16 0 0 1 32 0'/><circle cx='356' cy='108' r='10'/><path d='M340 150a16 16 0 0 1 32 0'/><rect x='424' y='30' width='122' height='160' rx='18' stroke='#9aa0ac' stroke-dasharray='8 8'/><text x='485' y='66' text-anchor='middle' fill='#9aa0ac' stroke='none'>社外</text><path d='M467 106l36 36M503 106l-36 36' stroke='#ff5a5f'/></svg>"
+      },
       "claims": [
-        { "source": "情シス", "text": "社外の資料は社内限定に" },
-        { "source": "アンケート", "text": "休んだ回をあとで見たい" }
+        {
+          "source": "情シス",
+          "text": "社外資料は社内限定に"
+        },
+        {
+          "source": "アンケート",
+          "text": "休んだ回をあとで見たい"
+        }
       ],
-      "facts": ["いまはスライドだけ共有"],
-      "unknowns": ["保存先の容量の上限"],
       "options": [
-        { "key": "A", "label": "録画しない", "note": "スライド共有だけ続ける" },
-        { "key": "B", "label": "社内限定で公開", "note": "参加者以外の社員も見られる" }
+        {
+          "key": "A",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><rect x='6' y='8' width='36' height='24' rx='3'/><path d='M24 32v8M16 42h16M13 24l7-7 5 5 8-8'/></svg>",
+          "label": "録画しない",
+          "note": "スライド共有だけ"
+        },
+        {
+          "key": "B",
+          "icon": "<svg viewBox='0 0 48 48' fill='none' stroke='currentColor' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='M8 42V12l16-6 16 6v30'/><path d='M4 42h40M16 18h4M28 18h4M16 27h4M28 27h4'/><rect x='20' y='34' width='8' height='8' stroke='#2b59ff'/></svg>",
+          "label": "社内限定で公開"
+        }
       ]
     }
   ]
