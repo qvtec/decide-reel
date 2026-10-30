@@ -339,6 +339,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .bb:hover { background: rgba(127, 127, 127, .14); }
 .bb svg { width: 20px; height: 20px; fill: currentColor; }
 .bb.off { opacity: .45; }
+.bb.spd { min-width: 52px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .bb.play { background: var(--accent-fill); color: var(--on); min-width: 48px; }
 #voiceSel { height: 34px; max-width: 190px; border: 1px solid var(--bar-line); border-radius: 8px; background: var(--bar); color: var(--bar-ink); font: inherit; font-size: 13px; padding: 0 6px; }
 #voiceSel:disabled { opacity: .45; }
@@ -383,6 +384,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     <button class="bb" id="bMenu" title="目次（M）"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span class="lbl"></span></button>
     <button class="bb" id="bNarr" title="ナレーション（V）"><svg viewBox="0 0 24 24"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1a7 7 0 0 0 6-6.9z"/></svg><span class="lbl"></span></button>
     <select id="voiceSel" title="声の種類"></select>
+    <button class="bb spd" id="bSpeed" title="速さ（&lt; &gt;）"></button>
     <button class="bb" id="bSe" title="効果音（S）"><svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 5V4L7 9zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg><span class="lbl"></span></button>
     <button class="bb" id="bFull" title="全画面（F）"><svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 0h2v5h-5v-2h3z"/></svg></button>
   </div>
@@ -640,6 +642,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
   var clip = null;
   function playClip(text, done) {
     var au = new Audio(AUDIO[text]), fired = false;
+    au.playbackRate = SPEED;
     function fin() { if (fired) return; fired = true; clearTimeout(c.guard); if (clip === c) clip = null; done(); }
     var c = { au: au, guard: setTimeout(fin, estimate(text) * 3 + 6000) };
     clip = c;
@@ -651,7 +654,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     if (!('speechSynthesis' in window)) { setTimeout(done, estimate(text)); return; }
     var u = new SpeechSynthesisUtterance(text), fired = false;
     if (voice) { u.voice = voice; u.lang = voice.lang; } else { u.lang = LANG === 'en' ? 'en-US' : 'ja-JP'; }
-    u.rate = D.rate || 1.05; u.volume = 1;
+    u.rate = (D.rate || 1.05) * SPEED; u.volume = 1;
     function fin() { if (fired) return; fired = true; clearTimeout(guard); done(); }
     // onend が来ないブラウザがあるので保険のタイマーを置く
     var guard = setTimeout(fin, estimate(text) * 2 + 4000);
@@ -666,7 +669,24 @@ button { font: inherit; color: inherit; cursor: pointer; }
   // 声なしのときの1カットの長さ。文字が短い前提で、テンポよく進める
   function estimate(text) {
     var n = String(text || '').length;
-    return Math.min(11000, Math.max(1900, 1200 + n * (LANG === 'en' ? 40 : 85)));
+    return Math.min(11000, Math.max(1900, 1200 + n * (LANG === 'en' ? 40 : 85))) / SPEED;
+  }
+
+  // ---- 速さ ----
+  // 声と、声なしのカットの長さに掛ける。画面の動きの速さは変えない
+  var SPEEDS = [0.8, 1, 1.25, 1.5], SPEED_KEY = 'decide-reel:speed';
+  var SPEED = (function () { try { var v = +localStorage.getItem(SPEED_KEY); return SPEEDS.indexOf(v) >= 0 ? v : 1; } catch (e) { return 1; } })();
+  function setSpeed(v) {
+    SPEED = v;
+    try { localStorage.setItem(SPEED_KEY, String(v)); } catch (e) {}
+    updateBar(); toast((LANG === 'en' ? 'Speed ' : '速さ ') + '×' + v);
+    // 読んでいる途中なら、その場面を新しい速さで読み直す
+    if (S.playing) go(S.pos, S.beat, true);
+    else if (cur().wait && S.narr && !answers[S.pos]) { hush(); readOptions(S.token); }
+  }
+  function speedBy(d) {
+    var i = SPEEDS.indexOf(SPEED) + d;
+    if (i >= 0 && i < SPEEDS.length) setSpeed(SPEEDS[i]);
   }
 
   // ---- 進行 ----
@@ -707,7 +727,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
       return;
     }
     if (!S.playing) { fillSeg(false, 0); return; }
-    var ms = b.ms || estimate(b.say), lead = b.st === 0 ? 450 : 0;
+    var ms = b.ms ? b.ms / SPEED : estimate(b.say), lead = b.st === 0 ? 450 : 0;
     fillSeg(false, ms + lead);
     function next() {
       if (tok !== S.token || !S.playing) return;
@@ -1154,6 +1174,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
     $('#bNarr .lbl').textContent = T.narr + (S.narr ? ' ON' : ' OFF');
     $('#bSe .lbl').textContent = T.se + (S.se ? ' ON' : ' OFF');
     $('#bMenu .lbl').textContent = T.menu;
+    $('#bSpeed').textContent = '×' + SPEED;
     var dots = $('#dots');
     if (dots.children.length !== N) {
       dots.innerHTML = '';
@@ -1184,6 +1205,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
   $('#bMenu').onclick = toggleMenu;
   $('#bNarr').onclick = function () { S.narr = !S.narr; if (!S.narr) hush(); updateBar(); if (S.playing) go(S.pos, S.beat, true); };
   $('#bSe').onclick = function () { S.se = !S.se; updateBar(); };
+  // 押すたびに 0.8 → 1 → 1.25 → 1.5 → 0.8 と回す
+  $('#bSpeed').onclick = function () { setSpeed(SPEEDS[(SPEEDS.indexOf(SPEED) + 1) % SPEEDS.length]); this.blur(); };
   $('#voiceSel').onchange = function () {
     var name = this.value;
     useCloud = name === CLOUD;
@@ -1214,6 +1237,8 @@ button { font: inherit; color: inherit; cursor: pointer; }
     else if (k === 'v' || k === 'V') $('#bNarr').click();
     else if (k === 's' || k === 'S') $('#bSe').click();
     else if (k === 'f' || k === 'F') $('#bFull').click();
+    else if (k === '>' || k === '.') speedBy(1);
+    else if (k === '<' || k === ',') speedBy(-1);
     else if (k === 'Escape') $('#drawer').classList.remove('open');
     else if (k === 't' || k === 'T') { applyTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]); toast((LANG === 'en' ? 'Theme: ' : 'テーマ：') + (LANG === 'en' ? theme : THEME_NAMES[theme])); }
     else if (b.wait && /^[1-9]$/.test(k)) {
